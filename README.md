@@ -61,4 +61,4 @@ O app usa o plugin `@capacitor/camera` e solicita acesso à câmera e à galeria
 
 ## Link do repositório
 
-Publicar o projeto em um repositório GitHub público e informar a URL aqui.
+(https://github.com/kenzo-animation/galeira_foto.git)
