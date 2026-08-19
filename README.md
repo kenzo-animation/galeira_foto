@@ -1,5 +1,9 @@
 # Galeira Foto
 
+Nome: Kenzo Ruthes dos Santos.
+Curso: 3º info.
+Unidade Curricular: codificar aplicaçoens para dispositivos moveis.
+
 Aplicativo Ionic + Vue para cadastro e login com uso de câmera e galeria de fotos.
 
 ## Funcionalidades
