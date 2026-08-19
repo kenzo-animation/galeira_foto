@@ -2,11 +2,24 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Galeria</ion-title>
+        <ion-title>Home</ion-title>
+        <ion-buttons slot="end">
+          <ion-button color="medium" @click="logout">Sair</ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Olá, {{ currentUser?.name || 'usuário' }}</ion-card-title>
+          <ion-card-subtitle>Galeira de fotos</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <p>Adicione quantas fotos quiser usando a câmera ou a galeria.</p>
+        </ion-card-content>
+      </ion-card>
+
       <div v-if="fotos.length" class="photo-grid">
         <div v-for="(foto, index) in fotos" :key="`${foto}-${index}`" class="photo-item">
           <img :src="foto" :alt="`Foto ${index + 1}`" />
@@ -14,15 +27,19 @@
       </div>
 
       <ion-card v-else>
-        <ion-card-content>Nenhuma foto selecionada</ion-card-content>
+        <ion-card-content>Nenhuma foto adicionada ainda.</ion-card-content>
       </ion-card>
 
       <ion-button expand="block" class="ion-margin-top" @click="tirarFoto">
-        Adicionar foto
+        Tirar foto
       </ion-button>
 
       <ion-button expand="block" fill="outline" class="ion-margin-top" @click="abrirGaleria">
         Escolher da galeria
+      </ion-button>
+
+      <ion-button expand="block" fill="clear" class="ion-margin-top" @click="openAbout">
+        Sobre
       </ion-button>
     </ion-content>
   </ion-page>
@@ -30,25 +47,32 @@
 
 <script setup lang="ts">
 import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
   IonButton,
+  IonButtons,
   IonCard,
   IonCardContent,
+  IonCardHeader,
+  IonCardSubtitle,
+  IonCardTitle,
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
   toastController,
 } from '@ionic/vue'
-import { onMounted, ref } from 'vue'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { ref, onMounted } from 'vue'
+import router from '@/router'
+import { getActiveUser, logoutUser } from '@/utils/auth'
 
+const currentUser = ref(getActiveUser())
 const fotos = ref<string[]>([])
 
-async function mostrarToast(message: string, color: string = 'primary', duration = 2000) {
+async function showToast(message: string, color: string = 'primary') {
   const toast = await toastController.create({
     message,
-    duration,
+    duration: 2000,
     color,
     position: 'bottom',
   })
@@ -64,7 +88,7 @@ async function verificarPermissao() {
       const result = await Camera.requestPermissions()
 
       if (result.camera !== 'granted' && result.photos !== 'granted') {
-        await mostrarToast('Permissão de câmera e galeria negada', 'warning')
+        await showToast('Permissão de câmera e galeria negada.', 'warning')
         return false
       }
     }
@@ -98,7 +122,7 @@ async function adicionarFoto(source: CameraSource) {
       return
     }
 
-    await mostrarToast('Não foi possível acessar a mídia', 'danger')
+    await showToast('Não foi possível acessar a mídia.', 'danger')
   }
 }
 
@@ -110,7 +134,17 @@ async function abrirGaleria() {
   await adicionarFoto(CameraSource.Photos)
 }
 
+function logout() {
+  logoutUser()
+  router.replace('/login')
+}
+
+function openAbout() {
+  router.push('/sobre')
+}
+
 onMounted(() => {
+  currentUser.value = getActiveUser()
   void verificarPermissao()
 })
 </script>
@@ -120,7 +154,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
+  margin-top: 20px;
 }
 
 .photo-item {
