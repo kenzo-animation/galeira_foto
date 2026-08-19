@@ -10,7 +10,7 @@ Aplicativo Ionic + Vue para cadastro e login com uso de câmera e galeria de fot
 
 - Tela de login
 - Tela de cadastro
-- Home acessível somente após autenticação
+- Home acessível somente depois da autenticação
 - Tela de sobre
 - Solicitação de permissão para acessar câmera e galeria
 - Persistência local de usuários em `localStorage`
