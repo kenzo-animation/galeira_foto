@@ -80,14 +80,16 @@ async function showToast(message: string, color: string = 'primary') {
   await toast.present()
 }
 
-async function verificarPermissao() {
+async function verificarPermissao(source?: CameraSource) {
   try {
     const status = await Camera.checkPermissions()
+    const precisaCamera = !source || source === CameraSource.Prompt
+    const precisaGaleria = !source || source === CameraSource.Photos
 
-    if (status.camera !== 'granted' && status.photos !== 'granted') {
+    if ((precisaCamera && status.camera !== 'granted') || (precisaGaleria && status.photos !== 'granted')) {
       const result = await Camera.requestPermissions()
 
-      if (result.camera !== 'granted' && result.photos !== 'granted') {
+      if ((precisaCamera && result.camera !== 'granted') || (precisaGaleria && result.photos !== 'granted')) {
         await showToast('Permissão de câmera e galeria negada.', 'warning')
         return false
       }
@@ -101,7 +103,7 @@ async function verificarPermissao() {
 
 async function adicionarFoto(source: CameraSource) {
   try {
-    const autorizado = await verificarPermissao()
+    const autorizado = await verificarPermissao(source)
 
     if (!autorizado) {
       return

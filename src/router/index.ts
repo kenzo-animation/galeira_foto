@@ -17,7 +17,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/home',
-    component: () => import('@/views/HomePage.vue'),
+    component: () => import('@/views/TabsPage.vue'),
     beforeEnter: (_, __, next) => {
       if (isAuthenticated()) {
         next()
@@ -25,6 +25,12 @@ const routes: Array<RouteRecordRaw> = [
       }
       next('/login')
     },
+    children: [
+      { path: '', redirect: '/home/camera' },
+      { path: 'camera', component: () => import('@/views/Tab1Page.vue') },
+      { path: 'galeria', component: () => import('@/views/Tab2Page.vue') },
+      { path: 'sobre', component: () => import('@/views/AboutPage.vue') },
+    ],
   },
   {
     path: '/sobre',

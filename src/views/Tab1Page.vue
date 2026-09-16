@@ -7,18 +7,18 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <div v-if="fotos.length" class="photo-grid">
-        <div v-for="(foto, index) in fotos" :key="`${foto}-${index}`" class="photo-item">
-          <img :src="foto" :alt="`Foto ${index + 1}`" />
-        </div>
-      </div>
-
-      <ion-card v-else>
-        <ion-card-content>Nenhuma foto selecionada</ion-card-content>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Nova foto</ion-card-title>
+          <ion-card-subtitle>As imagens ficam salvas no banco local do aparelho.</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          Capture uma imagem com a câmera ou escolha uma foto já existente na galeria.
+        </ion-card-content>
       </ion-card>
 
       <ion-button expand="block" class="ion-margin-top" @click="tirarFoto">
-        Adicionar foto
+        Tirar foto
       </ion-button>
 
       <ion-button expand="block" fill="outline" class="ion-margin-top" @click="abrirGaleria">
@@ -30,8 +30,8 @@
 
 <script setup lang="ts">
 import {
-  IonPage,
   IonHeader,
+  IonPage,
   IonToolbar,
   IonTitle,
   IonContent,
@@ -40,10 +40,11 @@ import {
   IonCardContent,
   toastController,
 } from '@ionic/vue'
-import { onMounted, ref } from 'vue'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { getActiveUser } from '@/utils/auth'
+import { savePhoto } from '@/utils/photoDatabase'
 
-const fotos = ref<string[]>([])
+const currentUser = getActiveUser()
 
 async function mostrarToast(message: string, color: string = 'primary', duration = 2000) {
   const toast = await toastController.create({
@@ -56,14 +57,16 @@ async function mostrarToast(message: string, color: string = 'primary', duration
   await toast.present()
 }
 
-async function verificarPermissao() {
+async function verificarPermissao(source?: CameraSource) {
   try {
     const status = await Camera.checkPermissions()
+    const precisaCamera = !source || source === CameraSource.Prompt
+    const precisaGaleria = !source || source === CameraSource.Photos
 
-    if (status.camera !== 'granted' && status.photos !== 'granted') {
+    if ((precisaCamera && status.camera !== 'granted') || (precisaGaleria && status.photos !== 'granted')) {
       const result = await Camera.requestPermissions()
 
-      if (result.camera !== 'granted' && result.photos !== 'granted') {
+      if ((precisaCamera && result.camera !== 'granted') || (precisaGaleria && result.photos !== 'granted')) {
         await mostrarToast('Permissão de câmera e galeria negada', 'warning')
         return false
       }
@@ -77,7 +80,7 @@ async function verificarPermissao() {
 
 async function adicionarFoto(source: CameraSource) {
   try {
-    const autorizado = await verificarPermissao()
+    const autorizado = await verificarPermissao(source)
 
     if (!autorizado) {
       return
@@ -90,8 +93,9 @@ async function adicionarFoto(source: CameraSource) {
       width: 1200,
     })
 
-    if (foto.dataUrl) {
-      fotos.value = [foto.dataUrl, ...fotos.value]
+    if (foto.dataUrl && currentUser) {
+      await savePhoto(currentUser.id, foto.dataUrl)
+      await mostrarToast('Foto salva na galeria.', 'success')
     }
   } catch (err: unknown) {
     if (String(err).includes('cancelled')) {
@@ -110,30 +114,4 @@ async function abrirGaleria() {
   await adicionarFoto(CameraSource.Photos)
 }
 
-onMounted(() => {
-  void verificarPermissao()
-})
 </script>
-
-<style scoped>
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.photo-item {
-  overflow: hidden;
-  border-radius: 12px;
-  background: #f4f5f8;
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
-}
-
-.photo-item img {
-  display: block;
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-}
-</style>
